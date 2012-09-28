@@ -8,10 +8,33 @@ struct node
 	int ne_node;
 };
 
-struct node_operations
+typedef struct node node_t;
+
+struct node_ops
 {
-	
+	int (*add_element)(node_t* node_obj,char* element);
+	int (*display_element)(node_t* node_obj);
 };
+
+
+static int add_element_node(node_t* node_obj,char* element)
+{
+	printf("Hello\n");
+	return 1;
+}
+
+static int display_element_node(node_t* node_obj)
+{
+	printf("Hello\n");
+	printf("%s\n",node_obj->name);
+	return 1;
+}
+
+static const struct node_ops node_ops_n = {		//Redefining Functions to operate on node
+	.add_element=add_element_node,
+	.display_element=display_element_node
+};
+
 struct node_pool
 {
 	struct node *node_obj;
@@ -21,28 +44,19 @@ struct node_pool
 	//int traverse(char* name);
 };
 
+struct node_pool_ops
+{
+	
+};
+
 typedef struct node_pool node_pool_t;
 typedef char new_node;
-void start(node_pool_t* pool1)
+void create_pool(node_pool_t* pool1)
 {
 	int i;
 	pool1->ne_pool=0;	
 	expected=5000;
 	pool1->node_obj=(struct node*)malloc(sizeof(struct node)*50);		
-//	struct node* n1;
-//	n1=pool1->node_obj;
-	//for (i=0; i< 40;i++)
-	//{
-	//printf("%d\n",pool1->node_obj);
-	//pool1->node_obj[i].name="def";
-	//pool1->node_obj++;
-	//}
-	//pool1->node_obj=n1;
-	//for (i=0; i< 40;i++)
-//	{
-	//printf("%s\n",pool1->node_obj->name);
-	//pool1->node_obj++;
-//	}
 	
 }
 
@@ -70,7 +84,7 @@ int display_node(node_pool_t* pool1)
 int main()
 {
 	node_pool_t pool1;//=()malloc(sizeof(struct Node_ops));
-	start(&pool1);
+	create_pool(&pool1);
 	//printf("%d",sizeof(pool1));
 	create_node(&pool1,"file2");
 	create_node(&pool1,"file3");
@@ -79,5 +93,7 @@ int main()
 	create_node(&pool1,"file6");
 	display_node(&pool1);
 
+	//node_ops_n->display_element_node(pool1->node_obj[0]);
+	node_ops_n.display_element(&pool1.node_obj[2]);
 	//n1.create_node("file3");	
 }
