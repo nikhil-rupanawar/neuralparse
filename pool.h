@@ -20,7 +20,7 @@ struct pool_ops_n
 void create_pool(pool* pool1);
 int reallot_pool(pool* pool1);
 int create_node_implemented(pool* pool1,char* name);
-struct node* get_node_implemented(pool* pool1,char* nodename);
+struct node* get_node_implemented(pool* pool1,char* nodename);	//Get the node From a node name 
 int display_node_implemented(pool* pool1);
 
 static const struct pool_ops_n pool_ops = {		//Redefining Functions to operate on node

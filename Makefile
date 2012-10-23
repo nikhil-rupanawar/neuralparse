@@ -1,5 +1,5 @@
-run: start_p.o projection.o setdata.o wrapper.o regexfile.o recurse.o pool.o node.o hashlist.o hashlist.o hashalgo.o
-	gcc -o run start_p.o projection.o setdata.o  wrapper.o regexfile.o recurse.o pool.o node.o hashlist.o hashalgo.o  -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
+run: start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o hashlist.o hashlist.o hashalgo.o
+	gcc -o run start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o hashlist.o hashalgo.o  -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
 
 start_p.o: start_p.c
 	gcc -c start_p.c -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
@@ -9,6 +9,9 @@ projection.o : projection.c
 
 setfile.o: setdata.c
 	gcc -c setdata.c
+
+coords.o: coords.c
+	gcc -c coords.c
 
 recurse.o: recurse.c 
 	gcc -c recurse.c

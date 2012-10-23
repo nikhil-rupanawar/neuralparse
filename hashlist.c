@@ -108,4 +108,19 @@ void hashlist_initialize_implemented(hashlist* list1)
 	list1->Hash=NULL;
 }
 
+hash* hashlist_findhash_implemented(hashlist* list1, char* key_name)
+{
+	printf("FINDHASH\n");
 
+	int i;
+	for(i=0; i < list1->size; i++)
+	{
+		if(list1->Hash[i].valid == 1 && !strcmp(list1->Hash[i].key_name,key_name))
+		{
+			return &list1->Hash[i];
+		//	printf("\tName   :- %s\n",list1->Hash[i].key_name);
+		//	printf("\tCoords :- %d %d %d\n",list1->Hash[i].x,list1->Hash[i].y,list1->Hash[i].z);
+		}			
+	}
+	return NULL;
+}

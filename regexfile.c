@@ -4,6 +4,10 @@
 #include<string.h>
 #include"node.h"
 #include"regexfile.h"
+#include"wrapper.h"
+#include"recurse.h"
+
+
 int has_char(char* str,char ch)
 {
 	while(*str !='\0')
@@ -79,11 +83,13 @@ int regexfile(node* node_obj,char* filename)
 				node_ops.add_element(node_obj,header_file);		
 		     }
 		     else if (has_char(str,'"'))
-		     {	
+		     {
+				char* cwd=gnu_getcwd();
+			        strcat(cwd,"/");	
 				printf("Contains Local File\n");
 			        char* header_file = extarct_word(str, '"');
 				printf("Adding Header_File :- %s\n",header_file);
-				node_ops.add_element(node_obj,header_file);	
+				node_ops.add_element(node_obj,strcat(cwd,header_file));	
 		     }
 		     
 	        }

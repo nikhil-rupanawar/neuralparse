@@ -72,7 +72,8 @@ int create_node_implemented(pool* pool1,char* name)
 node* get_node_implemented(pool* pool1,char* nodename)
 {
 	int i=0;
-	while(1)
+	//while(1)
+	for(i=0;i<pool1->ne_pool;i++)
 	{
 		if( i == pool1->ne_pool)
 		{
@@ -84,8 +85,9 @@ node* get_node_implemented(pool* pool1,char* nodename)
 			//printf("Node present\n");
 			return &(pool1->node_obj[i]);
 		}
-	i++;
-	}	
+	//i++;
+	}
+	return NULL;	
 }
 int display_node_implemented(pool* pool1)
 {

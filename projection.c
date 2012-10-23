@@ -8,6 +8,7 @@
 #include"setdata.h"
 #include"pool.h"
 #include"hashlist.h"
+#include"coords.h"
 #define ESCAPE 27        /* ESC key code */
 
 int fullscreen=0;        /* toggle fullscreen */
@@ -31,7 +32,7 @@ GLint prevx, prevy;        /* Remember previous x and y positions */
 GLfloat xt=1.0,yt=1.0,zt=1.0;   /* scale */
 pool pool1;
 hashlist hashlist1;
-
+line line_obj;
 /* Image type - contains height, width, and data */
 
 unsigned char *raw_image = NULL;
@@ -153,17 +154,17 @@ void transform(GLfloat Width , GLfloat Height )
 
 void InitGL(GLint Width, GLint Height)
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);     /* This Will Clear The Background Color To Black*/
-    glClearDepth(1.0);                /* Enables Clearing Of The Depth Buffer*/
-    //LoadTexture();
-    glEnable(GL_TEXTURE_2D);                      /*  Enable texture mapping. */
-    glDepthFunc(GL_LESS);             /* The Type Of Depth Test To Do*/
-    glEnable(GL_DEPTH_TEST);          /* Enables Depth Testing*/
-    glShadeModel(GL_SMOOTH);          /* Enables Smooth Color Shading*/
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);     /* This Will Clear The Background Color To Black*/
+	glClearDepth(1.0);                	  /* Enables Clearing Of The Depth Buffer*/
+	//LoadTexture();
+	glEnable(GL_TEXTURE_2D);                      /*  Enable texture mapping. */
+	glDepthFunc(GL_LESS);             	/* The Type Of Depth Test To Do*/
+	glEnable(GL_DEPTH_TEST);          	/* Enables Depth Testing*/
+	glShadeModel(GL_SMOOTH);          	/* Enables Smooth Color Shading*/
 	if (traverse==0)
 	{	
 		printf("Displaying AGAIN\n");
-		setdata(&pool1,&hashlist1);
+		setdata(&pool1,&hashlist1,&line_obj);
 		traverse==1;
 	}
 
@@ -193,7 +194,7 @@ GLvoid draw_room()
 	glPushMatrix();
 	printf("DISPLAYING HASH\n");
 	printf("LIST SIZE %d\n",hashlist1.size);
-
+/*
 	for(i=0; i < hashlist1.size; i++)
 	{
 		if(hashlist1.Hash[i].valid == 1)
@@ -202,12 +203,12 @@ GLvoid draw_room()
 			printf("\tCoords :- %d %d %d\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
 		}			
 	}
-
+*/
 	for(i=0; i < hashlist1.size; i++)
  	{
 		if (hashlist1.Hash[i].valid != 1) continue;
     		//glMatrixMode(GL_MODELVIEW);
-  		glTranslatef(0.4,0,0);
+  	//	glTranslatef(0.4,0,0);
     		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
 		glShadeModel(GL_SMOOTH); 
   		glLineWidth(1.0);                             
@@ -218,6 +219,26 @@ GLvoid draw_room()
 	  	glEnd();                              /* Done Drawing The Cube*/
   		glEnable(GL_DEPTH_TEST);
  	 }
+	for(i=0; i < line_obj.ne; i++)
+ 	{
+    		//glMatrixMode(GL_MODELVIEW);
+  	//	glTranslatef(0.4,0,0);
+    		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
+		glShadeModel(GL_SMOOTH); 
+  		glLineWidth(1.0);                             
+	  	glPointSize(4.0);                             /* Add point size, to make it clear */
+  		//glLineWidth(1.0);                             
+	  	//glPointSize(4.0);                             /* Add point size, to make it clear */
+  		glBegin(GL_LINES);                /* start drawing the cube.*/
+	  	glColor3f(1.0f,0.0f,1.0f);            /* Set The Color To Orange*/
+  		//glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
+
+  		glVertex3f((float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
+  		glVertex3f((float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
+	  	glEnd();                              /* Done Drawing The Cube*/
+  		glEnable(GL_DEPTH_TEST);
+ 	 }
+	
   	glPopMatrix();
 }
 
