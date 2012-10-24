@@ -101,7 +101,7 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 		        printf("\tName   :- %s\n",hash_get2->key_name);
 		   	printf("\tCoords :- %d %d %d\n",hash_get2->x,hash_get2->y,hash_get2->z);	
 			printf("\tElement Name :- %s\n",pool1->node_obj[i].element_obj[j].name);
-			line_ops.line_add(line_obj,hash_get1->x,hash_get1->y,hash_get1->z,hash_get2->x,hash_get2->y,hash_get2->y);
+			line_ops.line_add(line_obj,hash_get1->x,hash_get1->y,hash_get1->z,hash_get2->x,hash_get2->y,hash_get2->z);
 		}
 	}
 	line_ops.line_display(line_obj);

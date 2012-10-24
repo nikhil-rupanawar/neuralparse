@@ -185,7 +185,9 @@ void ReSizeGLScene(GLint Width, GLint Height)
 
 
 GLvoid draw_room()
-{
+{	
+	FILE *fp;
+	fp=fopen("log_projection","w");
 	int i;
 	float ix,iy,iz;
 	ix=-1.0f;
@@ -194,16 +196,19 @@ GLvoid draw_room()
 	glPushMatrix();
 	printf("DISPLAYING HASH\n");
 	printf("LIST SIZE %d\n",hashlist1.size);
-/*
+	fprintf(fp,"\n\nADDING FILE coords\n");
+
 	for(i=0; i < hashlist1.size; i++)
 	{
 		if(hashlist1.Hash[i].valid == 1)
 		{
+			fprintf(fp,"\tName   :- %s\n",hashlist1.Hash[i].key_name);
+			fprintf(fp,"\tCoords :- %f %f %f\n",(float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);
 			printf("\tName   :- %s\n",hashlist1.Hash[i].key_name);
-			printf("\tCoords :- %d %d %d\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
+			printf("\tCoords :- %f %f %f\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
 		}			
 	}
-*/
+
 	for(i=0; i < hashlist1.size; i++)
  	{
 		if (hashlist1.Hash[i].valid != 1) continue;
@@ -219,6 +224,7 @@ GLvoid draw_room()
 	  	glEnd();                              /* Done Drawing The Cube*/
   		glEnable(GL_DEPTH_TEST);
  	 }
+	fprintf(fp,"\n\nADDING LINE COORDS\n");
 	for(i=0; i < line_obj.ne; i++)
  	{
     		//glMatrixMode(GL_MODELVIEW);
@@ -234,11 +240,13 @@ GLvoid draw_room()
   		//glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
 
   		glVertex3f((float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
+  		fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
   		glVertex3f((float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
+  		fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
 	  	glEnd();                              /* Done Drawing The Cube*/
   		glEnable(GL_DEPTH_TEST);
  	 }
-	
+	fclose(fp);	
   	glPopMatrix();
 }
 
