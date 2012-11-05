@@ -1,4 +1,6 @@
 #include<stdio.h>
+#include<string.h>
+#include"malloc.h"
 #include"pool.h"
 #include"node.h"
 struct community
@@ -12,21 +14,60 @@ struct community
 int phase1(pool* pool1)
 {
 	FILE *fp;
-	fp=fopen("PHASE1","w");
+	fp=fopen("PHASE1","wb");
 	int i,j;
-	pool_ops.display_nodes(pool1);
+	int size;
+	//pool_ops.display_nodes(pool1);
 	struct community comm[pool1->ne_pool];	
 	for(i=0;i<pool1->ne_pool;i++)
 	{
-		fprintf(fp, "%s\n",pool1->node_obj[i].name);
+		size=strlen(pool1->node_obj[i].name);
+		printf("SIZE IS %d\n",size);
+		fwrite(&size, sizeof(int),1, fp);
+		fwrite(pool1->node_obj[i].name, sizeof(char),size, fp);
+		//fprintf(fp, "%s\n",pool1->node_obj[i].name);
 		FILE* fy;
-		fy=fopen(pool1->node_obj[i].name,"w");
+		fy=fopen(pool1->node_obj[i].name,"wb");
 		for(j=0;j<pool1->node_obj[i].ne_node;j++)
-			fprintf(fy, "%s\n",pool1->node_obj[i].element_obj[j].name);
+		{
+			size=strlen(pool1->node_obj[i].element_obj[j].name)/sizeof(char);
+			fwrite(&size, sizeof(int),1, fy);
+			fwrite(pool1->node_obj[i].element_obj[j].name, sizeof(char),size, fy);
+			//fprintf(fy, "%s\n",pool1->node_obj[i].element_obj[j].name);
+		}
 		fclose(fy);	
-		comm[i].c_inner=0;
 	}	
 	fclose(fp);
+	FILE *file_phase;
+	char* name_comm;
+	char* name_elem;
+	printf("1. %u\n",name_comm);
+	printf("2. %u\n",name_elem);
+	file_phase=fopen("PHASE1","rb");
+
+	while(fread( &size,sizeof(int),1,file_phase))
+	{
+		printf("SIZE IS %d\n",size);
+		name_comm=malloc(sizeof(char)*size+1);
+		fread( name_comm,sizeof(char),size,file_phase);
+		printf("CIMM IS %d\n",strlen(name_comm));
+		printf("%s\n",name_comm);
+		
+		FILE* file_comm;
+		file_comm=fopen(name_comm,"rb");
+		while(fread( &size,sizeof(int),1,file_comm))
+		{
+			name_elem=malloc(sizeof(char)*size+1);
+			fread( name_elem,sizeof(char),size,file_comm);
+			printf("\telem size%d\n",strlen(name_elem));
+			printf("\telem %s\n",name_elem);
+		}
+		fclose(file_comm);
+				
+	}
+	fclose(file_phase);
+
+
 }
 
 int phase2()
@@ -38,7 +79,7 @@ int main()
 	int i;
 	pool pool1;
 	create_pool(&pool1);
-	pool_ops.create_node(&pool1,"node0");
+	pool_ops.create_node(&pool1,"ddddnode0");
 	pool_ops.create_node(&pool1,"node1");
 	pool_ops.create_node(&pool1,"node2");
 	pool_ops.create_node(&pool1,"node3");
@@ -47,7 +88,7 @@ int main()
 	pool_ops.create_node(&pool1,"node6");
 	pool_ops.create_node(&pool1,"node7");
 	pool_ops.create_node(&pool1,"node8");
-	pool_ops.display_nodes(&pool1);
+	//pool_ops.display_nodes(&pool1);
 	node_ops.add_element(&pool1.node_obj[0],"node1");
 	node_ops.add_element(&pool1.node_obj[0],"node2");
 	node_ops.add_element(&pool1.node_obj[1],"node0");
@@ -65,8 +106,8 @@ int main()
 	node_ops.add_element(&pool1.node_obj[7],"node5");
 	node_ops.add_element(&pool1.node_obj[7],"node8");
 	node_ops.add_element(&pool1.node_obj[8],"node7");
-	for(i=0;i<9;i++)
-		node_ops.display_element(&pool1.node_obj[i]);
+	//for(i=0;i<9;i++)
+	//	node_ops.display_element(&pool1.node_obj[i]);
 		
 	phase1(&pool1);	
 }
