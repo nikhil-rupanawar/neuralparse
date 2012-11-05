@@ -1,3 +1,4 @@
+#include<stdio.h>
 #include"pool.h"
 #include"node.h"
 struct community
@@ -10,14 +11,22 @@ struct community
 };
 int phase1(pool* pool1)
 {
-	int i;
+	FILE *fp;
+	fp=fopen("PHASE1","w");
+	int i,j;
 	pool_ops.display_nodes(pool1);
 	struct community comm[pool1->ne_pool];	
 	for(i=0;i<pool1->ne_pool;i++)
 	{
-		cum[i].c_inner=0;
-							
+		fprintf(fp, "%s\n",pool1->node_obj[i].name);
+		FILE* fy;
+		fy=fopen(pool1->node_obj[i].name,"w");
+		for(j=0;j<pool1->node_obj[i].ne_node;j++)
+			fprintf(fy, "%s\n",pool1->node_obj[i].element_obj[j].name);
+		fclose(fy);	
+		comm[i].c_inner=0;
 	}	
+	fclose(fp);
 }
 
 int phase2()
