@@ -11,6 +11,7 @@
 #include"coords.h"
 #define ESCAPE 27        /* ESC key code */
 
+float tmp_x,tmp_y,tmp_z;
 int fullscreen=0;        /* toggle fullscreen */
 GLint x_position = 0;   /* position on screen */
 GLint y_position = 0;
@@ -22,14 +23,14 @@ GLfloat w = 1200;         /* Window size. Global for use in rotation routine */
 GLfloat h = 1200;
 
 int object = 0;            /* Pyramid (0) or cube (1) ?? */
-int move=0;		   /* 1 tanslate, 2 rotate*/
 
 int traverse=0;
 GLint mb = 0;              /* which mouse button we press */
 GLfloat rot, w1, w2, w3;   /* Variables for rotation calculation */
 GLint prevx, prevy;        /* Remember previous x and y positions */
 
-GLfloat xt=1.0,yt=1.0,zt=1.0;   /* scale */
+GLint move=0;		   /* 1 tanslate, 2 rotate*/
+GLfloat xt=1.0,yt=1.0,zt=1.0;   /* translate */
 pool pool1;
 hashlist hashlist1;
 line line_obj;
@@ -143,7 +144,7 @@ void transform(GLfloat Width , GLfloat Height )
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(90.0f, Width/Height,0.1f,100.0f); 
+    gluPerspective(60.0f, Width/Height,0.0001f,1000.0f); 
     glTranslatef(0.0, 0.0, -5.0f);     /* Centre and away the viewer */
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -182,18 +183,43 @@ void ReSizeGLScene(GLint Width, GLint Height)
     w = glutGet((GLenum)GLUT_WINDOW_WIDTH);    /* Make sure our window size is updated */
     h = glutGet((GLenum)GLUT_WINDOW_HEIGHT);
 }
+void setOrthographicProjection() {
+	// switch to projection mode
+ 	glMatrixMode(GL_PROJECTION);
+	// save previous matrix which contains the 
+	//settings for the perspective projection
+	glPushMatrix();
+	// reset matrix
+	glLoadIdentity();
+	// set a 2D orthographic projection
+	gluOrtho2D(0, w, h, 0);
+	// switch back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
 
+void resetPerspectiveProjection() {
 
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void renderSpacedBitmapString(float x, float y,int spacing, void *font,char *string) {
+  char *c;
+  int x1=x;
+  for (c=string; *c != '\0'; c++) {
+	glRasterPos2f(x1,y);
+    glutBitmapCharacter(font, *c);
+	x1 = x1 + glutBitmapWidth(font,*c) + spacing;
+  }
+}
 GLvoid draw_room()
 {	
-	FILE *fp;
-	fp=fopen("log_projection","w");
+	//FILE *fp;
+	//fp=fopen("log_projection","w");
 	int i;
-	float ix,iy,iz;
-	ix=-1.0f;
-	iy=-2.1f;
-	iz=-0.1f;
 	glPushMatrix();
+	/*
 	printf("DISPLAYING HASH\n");
 	printf("LIST SIZE %d\n",hashlist1.size);
 	fprintf(fp,"\n\nADDING FILE coords\n");
@@ -204,31 +230,40 @@ GLvoid draw_room()
 		{
 			fprintf(fp,"\tName   :- %s\n",hashlist1.Hash[i].key_name);
 			fprintf(fp,"\tCoords :- %f %f %f\n",(float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);
-			printf("\tName   :- %s\n",hashlist1.Hash[i].key_name);
-			printf("\tCoords :- %f %f %f\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
+			//printf("\tName   :- %s\n",hashlist1.Hash[i].key_name);
+			//printf("\tCoords :- %f %f %f\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
 		}			
 	}
-
+	*/
 	for(i=0; i < hashlist1.size; i++)
  	{
 		if (hashlist1.Hash[i].valid != 1) continue;
     		//glMatrixMode(GL_MODELVIEW);
-  	//	glTranslatef(0.4,0,0);
+  		//glTranslatef(0.4,0,0);
     		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
 		glShadeModel(GL_SMOOTH); 
   		glLineWidth(1.0);                             
 	  	glPointSize(4.0);                             /* Add point size, to make it clear */
   		glBegin(GL_POINTS);                /* start drawing the cube.*/
-	  	glColor3f(1.0f,1.0f,1.0f);            /* Set The Color To Orange*/
+	  	glColor3f(0.0f,0.0f,1.0f);            /* Set The Color To Orange*/
+		//if ((float)hashlist1.Hash[i].x == 12.0 && (float)hashlist1.Hash[i].y == 2.0 && (float)hashlist1.Hash[i].z == 10.0 )
+		if ( i == 0 )
+		{
+	  		glColor3f(1.0f,0.0f,0.0f);            /* Set The Color To Orange*/
+			printf("NOW WHAT\n");
+			tmp_x=(float)hashlist1.Hash[i].x;
+			tmp_y=(float)hashlist1.Hash[i].y;
+			tmp_z=(float)hashlist1.Hash[i].z;
+		}
   		glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
 	  	glEnd();                              /* Done Drawing The Cube*/
   		glEnable(GL_DEPTH_TEST);
  	 }
-	fprintf(fp,"\n\nADDING LINE COORDS\n");
+	//fprintf(fp,"\n\nADDING LINE COORDS\n");
 	for(i=0; i < line_obj.ne; i++)
  	{
     		//glMatrixMode(GL_MODELVIEW);
-  	//	glTranslatef(0.4,0,0);
+  		//glTranslatef(0.4,0,0);
     		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
 		glShadeModel(GL_SMOOTH); 
   		glLineWidth(1.0);                             
@@ -236,21 +271,18 @@ GLvoid draw_room()
   		//glLineWidth(1.0);                             
 	  	//glPointSize(4.0);                             /* Add point size, to make it clear */
   		glBegin(GL_LINES);                /* start drawing the cube.*/
-	  	glColor3f(1.0f,0.0f,1.0f);            /* Set The Color To Orange*/
+	  	glColor3f(0.0f,1.0f,0.0f);            /* Set The Color To Orange*/
   		//glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
 
   		glVertex3f((float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
-  		fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
+  		//fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
   		glVertex3f((float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
-  		fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
+  		//fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
 	  	glEnd();                              /* Done Drawing The Cube*/
   		glEnable(GL_DEPTH_TEST);
  	 }
-	fclose(fp);	
-  	glPopMatrix();
+ 
 }
-
-
 /* The main drawing function. */
 void DrawGLScene()
 {
@@ -261,15 +293,18 @@ void DrawGLScene()
    
   
     glMatrixMode(GL_PROJECTION);
-   // if ( move==2 )
+    //if ( move==2 )
     {
-   	 glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
-	 move=0;
+    	glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
+//	move=0;
     }
     glMatrixMode(GL_MODELVIEW);
-   // if ( move==1 )
+    //if ( move==1 )
     {
+    	//glMatrixMode(GL_MODELVIEW);
+    	glLoadIdentity();
     	glTranslatef(xt,yt, zt);
+    	//glScalef(xt,yt, zt);
 	move=0;
     }
   //glScalef(xt,yt,zt);
@@ -304,11 +339,17 @@ void keyPressed(unsigned char key, int x, int y)
      case 'x':                          /* Scale x up */
         xt += 0.2;
 	move=1;
+    	//glMatrixMode(GL_MODELVIEW);
+    	//glLoadIdentity();
+    	//glTranslatef(xt,yt, zt);
         glutPostRedisplay();
         break;
      case 'X':
         xt -= 0.2;                      /* Scale x down */
 	move=1;
+    	//glMatrixMode(GL_MODELVIEW);
+    	//glLoadIdentity();
+    	//glTranslatef(xt,yt, zt);
         glutPostRedisplay();
         break;
 
@@ -434,6 +475,43 @@ void find_axis_of_rotation(int x, int y, int dx, int dy,GLfloat *rot, GLfloat *w
 
 GLvoid Mouse( int b , int s, int xx, int yy)
 {
+	printf("Mouse: %d %d\n",xx,yy);
+	{
+	double a1,a2,a3;	
+	GLint viewport[4];
+	GLdouble modelview[16];
+	GLdouble projection[16]; 
+	glGetIntegerv(GL_VIEWPORT, viewport);  
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview); 	
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);  
+ 	gluProject(tmp_x+xt,tmp_y+yt,tmp_z+zt, modelview, projection, viewport, &a1, &a2, &a3);
+
+	printf("Unproject %f %f %f\n",a1,a2,a3);	
+ 	glPopMatrix();
+
+  	setOrthographicProjection();
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef(50.0f ,40.0f,0.0f);
+  	glLineWidth(1.0);                             
+	glPointSize(4.0);                             /* Add point size, to make it clear */
+	glColor3f(0.5,0.5,0.5);            /* Set The Color To Blue*/
+  	glBegin(GL_QUADS);                /* start drawing the cube.*/
+  	glVertex3f(a1,a2,0.0);        /* Top Right Of The Quad (Top)*/
+  	glVertex3f(a1-50.0,a2,0.0);        /* Top Right Of The Quad (Top)*/
+  	glVertex3f(a1-50.0,a2+20.0,0.0);        /* Top Right Of The Quad (Top)*/
+  	glVertex3f(a1,a2+20.0,0.0);        /* Top Right Of The Quad (Top)*/
+	glEnd();
+
+	renderSpacedBitmapString(5,30,0,GLUT_BITMAP_TIMES_ROMAN_10,"3D Tech");
+    	glutSwapBuffers();               /* Swap buffers */
+    	glFlush();
+	//glutWireCube(2.0f); // Render the primitive
+	glPopMatrix();
+		
+	resetPerspectiveProjection();
+	//fclose(fp);	
+	}
     switch (b) {
     case GLUT_LEFT_BUTTON:	/* only stash away for left mouse */
         prevx = xx - w/2;
@@ -455,7 +533,7 @@ GLvoid Motion( int xx , int yy )
         
     if( mb == 0 )            /* only for left mouse folks */
     {
-	move=2;
+//	move=2;
         x = xx - w/2;
         y = h/2 - yy;
         dx = x - prevx;
