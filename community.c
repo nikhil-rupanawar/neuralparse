@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include<string.h>
-#include"malloc.h"
+#include<malloc.h>
 #include"pool.h"
 #include"node.h"
 #include"node2.h"
@@ -15,8 +15,43 @@ struct community
 };
 
 
+void read_community(char* community)
+{
+	printf("%s\n",community);
+	FILE* file_comm;
+	int i,j,total,size,comm_total;
+	char* node;
+	file_comm=fopen(community,"rb");
+	fread(&total,sizeof(int),1,file_comm);
+	printf("Total Communities:- %d\n",total);
+	for(i=0; i<total; i++)			//For each community 
+	{
+		printf("\tCommunity:- %d\n",i);
+		fread(&comm_total,sizeof(int),1,file_comm);
+		printf("\t\tTotal N_C : %d\n",comm_total);
+		for(j=0;j<comm_total;j++)	//for each nodej in community 
+		{
+			//size=0;
+			fread(&size,sizeof(int),1,file_comm);
+			printf("\t\tSIZE:- %d\t",size);
+			node=(char*)malloc(sizeof(char)*size+1);
+	        	memset(node,'\0',size+1);	
+			fread(node,sizeof(char),size,file_comm);
+			printf("Node: %s\n",node);
+		}
+	}	
+}
+
 //IF return == 0 means nodes in same community skip this 
 //IF return == 1 means nodes in diff community thus tmp file valid
+int find_modularity(char* community, char* nodei)
+{
+	printf("\tCommunity: %s\t",community);
+	printf("Nodei: %s\t",nodei);
+	
+	return 1;
+}
+
 void create_tmp_community(char* community, char* nodei, char* nodej)
 {
 	printf("\tCommunity: %s\t",community);
@@ -36,8 +71,8 @@ void create_tmp_community(char* community, char* nodei, char* nodej)
 	long positionw;		//for holding write position
 	fread(&total,sizeof(int),1,file_comm);
 	printf("\tTotal Communities:- %d\n",total);
-
 		
+	//tmp=total;					/*Since After migration no of communities will be less This can be changed at last*/
 	tmp=total-1;					/*Since After migration no of communities will be less This can be changed at last*/
 	fwrite(&tmp,sizeof(int),1,file_comm_tmp);
 
@@ -48,11 +83,10 @@ void create_tmp_community(char* community, char* nodei, char* nodej)
 		long positionw_com,positionr_com;
 		positionw_com=ftell(file_comm_tmp);
 		positionr_com=ftell(file_comm);
-		printf("\tPositionwrite_com %ld\n",positionw_com);
-		printf("\tPositionread_com %ld\n",positionr_com);
+		//printf("\tPositionwrite_com %ld\n",positionw_com);
+		//printf("\tPositionread_com %ld\n",positionr_com);
 
 		fread(&comm_total,sizeof(int),1,file_comm);
-		fwrite(&comm_total,sizeof(int),1,file_comm_tmp);
 		printf("\tNode in community:- %d\n",comm_total);
 		int flag=0;
 		node2 buffer;
@@ -75,24 +109,50 @@ void create_tmp_community(char* community, char* nodei, char* nodej)
 			{
 				flag=flag+1;
 				printf("Hit i\n");
+				//continue;
 			}
 			if(!strcmp(nodej,node))
 			{
 				flag=flag+2;
 				printf("Hit j\n");
+				//continue;
 			}
 			if(flag==3)
 				printf("Same community\n");
 		}
-		node_ops2.display_element2(&buffer);
+		//node_ops2.display_element2(&buffer);
 		if(flag==1)	//nodei found
 		{
+			comm_total--;
+			if (comm_total == 0) continue;
+			fwrite(&comm_total,sizeof(int),1,file_comm_tmp);
+			for(k=0; k < buffer.ne_node; k++)
+			{
+				printf("\tElement %d\t%s\t%d\n",k,buffer.element_obj[k].name,buffer.element_obj[k].extra);	
+				if(!strcmp(buffer.element_obj[k].name, nodei))	continue;
+				fwrite(&buffer.element_obj[k].extra,sizeof(int),1,file_comm_tmp);
+				fwrite(buffer.element_obj[k].name,sizeof(char),buffer.element_obj[k].extra,file_comm_tmp);
+			}	
 			//Todo  write in buffer insted in file then flush its contents later on
-			fseek(file_comm_tmp,positionw_com,SEEK_SET);
-			printf("**POSITION AFTER NODEI: %ld",ftell(file_comm_tmp));	
+			//fseek(file_comm_tmp,positionw_com,SEEK_SET);
+			//printf("**POSITION AFTER NODEI: %ld",ftell(file_comm_tmp));	
 		}
 		else if(flag==2)//nodej found
 		{
+			
+			comm_total++;
+			fwrite(&comm_total,sizeof(int),1,file_comm_tmp);
+			for(k=0; k < buffer.ne_node; k++)
+			{
+				printf("\tElement %d\t%s\t%d\n",k,buffer.element_obj[k].name,buffer.element_obj[k].extra);	
+				if(!strcmp(buffer.element_obj[k].name, nodei))	continue;
+				fwrite(&buffer.element_obj[k].extra,sizeof(int),1,file_comm_tmp);
+				fwrite(buffer.element_obj[k].name,sizeof(char),buffer.element_obj[k].extra,file_comm_tmp);
+			}	
+			size=strlen(nodei);
+			fwrite(&size,sizeof(int),1,file_comm_tmp);
+			fwrite(nodei,sizeof(char),size,file_comm_tmp);
+					
 		}
 		else if(flag==3)//nodei in same community as nodej
 		{	
@@ -100,14 +160,15 @@ void create_tmp_community(char* community, char* nodei, char* nodej)
 		}
 		else
 		{
-			printf("\tBuffer %d\n", buffer.ne_node);
+			fwrite(&comm_total,sizeof(int),1,file_comm_tmp);
+			//printf("\tBuffer %d\n", buffer.ne_node);
 			for(k=0; k < buffer.ne_node; k++)
 			{
 				printf("\tElement %d\t%s\t%d\n",k,buffer.element_obj[k].name,buffer.element_obj[k].extra);	
 				fwrite(&buffer.element_obj[k].extra,sizeof(int),1,file_comm_tmp);
-				fwrite(buffer.element_obj[k].name,sizeof(char),(buffer.element_obj[k].extra),file_comm_tmp);
+				fwrite(buffer.element_obj[k].name,sizeof(char),buffer.element_obj[k].extra,file_comm_tmp);
 			}	
-
+		
 		}
 	}		
 	fclose(file_comm_tmp);
@@ -119,6 +180,9 @@ int migrate_node(char* community, char* nodei)
 	printf("---------------------------------\n");
 	printf("Community: %s\t",community);
 	printf("Node name: %s\n",nodei);
+	char* community_tmp = (char*)malloc(sizeof(char)*(strlen(community)+strlen("_tmp")+1));
+	strcpy(community_tmp,community);
+	strcat(community_tmp,"_tmp");
 	FILE* filei;
 	char* nodej;
 	int size;
@@ -130,12 +194,10 @@ int migrate_node(char* community, char* nodei)
 		fread(nodej,sizeof(char),size,filei);
 		//printf("\t%s\n",nodej);
 		create_tmp_community(community,nodei,nodej);
-		FILE* fi;
-		fi=fopen("PHASE1_community_tmp","rb");
-		fread(&size,sizeof(int),1,fi);
-		printf("AT migrate t %d\n",size);
-		fclose(fi); 
-		
+		int modularity=find_modularity(community_tmp,nodei);
+		printf("Modularity:-  %d\n",modularity);
+		//read_community("PHASE1_community_tmp");
+		break;
 	}
 	fclose(filei);	
 	/*
