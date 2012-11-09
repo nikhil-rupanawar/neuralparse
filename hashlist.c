@@ -90,6 +90,7 @@ void hashlist_display_implemented(hashlist* list1)
 {
 	int i;
 	printf("Displaying Hash list\n");
+	if (list1->alloted == 0) return;
 	for(i=0; i < list1->size; i++)
 	{
 		if(list1->Hash[i].valid == 1)
@@ -102,7 +103,7 @@ void hashlist_display_implemented(hashlist* list1)
 
 void hashlist_initialize_implemented(hashlist* list1)
 {
-	printf("Initializing\n");
+	//printf("Initializing\n");
 	list1->size=10;
 	list1->alloted=0;
 	list1->Hash=NULL;
@@ -110,9 +111,10 @@ void hashlist_initialize_implemented(hashlist* list1)
 
 hash* hashlist_findhash_implemented(hashlist* list1, char* key_name)
 {
-	printf("FINDHASH\n");
-
+	//printf("FINDHASH\n");
+	 
 	int i;
+	if (list1->alloted == 0) return NULL;
 	for(i=0; i < list1->size; i++)
 	{
 		if(list1->Hash[i].valid == 1 && !strcmp(list1->Hash[i].key_name,key_name))
