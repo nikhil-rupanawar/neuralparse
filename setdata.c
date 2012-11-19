@@ -9,6 +9,7 @@
 #include "hashlist.h"
 #include "recurse.h"
 #include "coords.h"
+#include "community.h"
 void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 {	
 	int i,j;			
@@ -53,7 +54,9 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 		printf("NODE NO:- %d\n",i);
 		node_ops.display_element(&pool1->node_obj[i]);
 	}
-	
+
+        //phase1(pool1);
+		
 	/*TMP CODE*/
 
 	

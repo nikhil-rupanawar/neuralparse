@@ -1,6 +1,7 @@
 struct element_t
 {
 	char* name;
+	int extra;
 	int sno_elem;			//element Sno in the node	
 };
 typedef struct element_t element;
