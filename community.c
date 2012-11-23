@@ -5,8 +5,10 @@
 #include"node.h"
 #include"node2.h"
 #include"hashlist.h"
+#include"hashlist2.h"
 #include"community.h"
-int phase_no;
+int pass_no;
+int comm_no;			/*Contains the no of communities in the previous pass*/
 struct info
 {
         int no;
@@ -410,8 +412,8 @@ int phase1(pool* pool1)
 	else
 		printf("Error in changing diretory\n");
         int i, j, size;
-	char* community=(char*)malloc(sizeof("PASS")+sizeof(phase_no));
-	sprintf(community,"PASS%d",phase_no);
+	char* community=(char*)malloc(sizeof("PASS")+sizeof(pass_no));
+	sprintf(community,"PASS%d",pass_no);
         FILE *fp = fopen(community,"wb");
         //pool_ops.display_nodes(pool1);
         //struct community comm[pool1->ne_pool];  
@@ -488,33 +490,40 @@ int phase1(pool* pool1)
 	}
 	//system("./../read PHASE1_community");
 	read_community(community);	
-	phase2(pool1);
+	phase2();
 }
 
-int phase2(pool* pool1)
+int phase2()
 {
 	int local=0;	
-        pool_ops.display_nodes(pool1);
+
         pool poolphase2;
         create_pool(&poolphase2);
+	hashlist2 list_pair;			/*list_pair contains the pair of node(key), community(extra)*/
+	hashlist_ops2.hashlist_initialize2(&list_pair);
 
-	char* community=(char*)malloc(sizeof("PASS")+sizeof(phase_no));
-	sprintf(community,"PASS%d",phase_no);
+	char* community=(char*)malloc(sizeof("PASS")+sizeof(pass_no));
+	sprintf(community,"PASS%d",pass_no);
 
         int i,j,total,size,comm_total;
         FILE* file_comm=fopen(community,"rb");
 
         fread(&total,sizeof(int),1,file_comm);
         printf("Total Communities:- %d\n",total);
-        int m;
+	if (comm_no == total)
+	{
+		printf("NO COMMUNITIES REDUCED\n");
+		return;	
+	}
+	comm_no=total;
         for(i=0; i<total; i++)                  //For each community
         {
                 printf("\tCommunity:- %d\n",i);
                 fread(&comm_total,sizeof(int),1,file_comm);
                 printf("\t\tTotal N_C : %d\n",comm_total);
-
-		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(phase_no)+sizeof("_node")+sizeof(long));
-		sprintf(name_node,"PASS%d_node%d",phase_no,local++);
+			
+		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(pass_no)+sizeof("_node")+sizeof(long));
+		sprintf(name_node,"PASS%d_node%d",pass_no,local++);
 	        pool_ops.create_node(&poolphase2,name_node);
 		
                 for(j=0;j<comm_total;j++)       //for each nodej in community
@@ -526,19 +535,79 @@ int phase2(pool* pool1)
                         memset(node,'\0',size+1);      
                         fread(node,sizeof(char),size,file_comm);
                         printf("Node: %s\n",node);
+			hashlist_ops2.hashlist_add2(&list_pair,node,name_node,0,0,0);
                 }
 		free(name_node);
         }      
         fclose(file_comm);      
-	//read_community("PASS1");	
-        pool_ops.display_nodes(&poolphase2);
-        //node_ops.add_element(&pool1.node_obj[1],"node0");
+	hashlist_ops2.hashlist_display2(&list_pair);	
+
+/*
+ * poolphase2: pool contains the new community as nodes  eg. PASS1_node0, PASS1_node1
+ * list_pair : hashlist2 contains pair (node, community) as (key,extra)
+ * 
+ * list_pair : used to get the community of node.
+ *
+ *
+ * */
+
+	/*Reopening The community file*/
+        file_comm=fopen(community,"rb");
+        fread(&total,sizeof(int),1,file_comm);
+        for(i=0; i<total; i++)                  //For each community
+        {
+                fread(&comm_total,sizeof(int),1,file_comm);
+		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(pass_no)+sizeof("_node")+sizeof(long));
+		sprintf(name_node,"PASS%d_node%d",pass_no,local++);
+
+                for(j=0;j<comm_total;j++)       //for each nodej in community
+                {
+                        char* node_var;
+                        fread(&size,sizeof(int),1,file_comm);
+                        node_var=(char*)malloc(sizeof(char)*size+1);
+                        memset(node_var,'\0',size+1);      
+                        fread(node_var,sizeof(char),size,file_comm);
+
+                        FILE* file_node = fopen(node_var,"rb");					/*Open nodefile , find the community(link) which node point, add that to												 the node element in pool*/
+			hash2* h1 = hashlist_ops2.hashlist_findhash2(&list_pair,node_var);
+			node* n1 =  pool_ops.get_node(&poolphase2,h1->extra);
+                        while(fread(&size,sizeof(int),1,file_node))
+                        {
+                                char* link = (char*)malloc(sizeof(char)*size+1);
+                               	memset(link,'\0',size+1);      
+                                fread(link,sizeof(char),size,file_node);
+				hash2* h2 = hashlist_ops2.hashlist_findhash2(&list_pair,link);
+				node_ops.add_element(n1,h2->extra);
+                                               
+			}	
+			fclose(file_node);
+			free(node_var);
+                }
+	
+		free(name_node);
+        }      
+        fclose(file_comm); 
+	
+/* 
+ * poolphase2 contains the 2D array of new_nodes and the link to which they point 
+ *
+ *
+ */
+        for(i=0; i< poolphase2.ne_pool; i++)
+        {
+                printf("-------------------\n");
+                node_ops.display_element(&poolphase2.node_obj[i]);
+        }
+
+	pass_no++;
+        phase1(&poolphase2);	
 }
 
 int main()
 {
         int i;
-	phase_no=1;
+	pass_no=1;
+	comm_no=0;
         pool pool1;
         create_pool(&pool1);
         pool_ops.create_node(&pool1,"node0");
