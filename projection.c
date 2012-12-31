@@ -11,7 +11,6 @@
 #include"coords.h"
 #define ESCAPE 27        /* ESC key code */
 
-float tmp_x,tmp_y,tmp_z;
 int fullscreen=0;        /* toggle fullscreen */
 GLint x_position = 0;   /* position on screen */
 GLint y_position = 0;
@@ -23,14 +22,14 @@ GLfloat w = 1200;         /* Window size. Global for use in rotation routine */
 GLfloat h = 1200;
 
 int object = 0;            /* Pyramid (0) or cube (1) ?? */
-
+int reset=0;
 int traverse=0;
 GLint mb = 0;              /* which mouse button we press */
 GLfloat rot, w1, w2, w3;   /* Variables for rotation calculation */
 GLint prevx, prevy;        /* Remember previous x and y positions */
 
 GLint move=0;		   /* 1 tanslate, 2 rotate*/
-GLfloat xt=1.0,yt=1.0,zt=1.0;   /* translate */
+GLfloat xt=0.0,yt=0.0,zt=0.0;   /* translate */
 pool pool1;
 hashlist hashlist1;
 line line_obj;
@@ -42,10 +41,50 @@ int height = 1200;
 int bytes_per_pixel = 3;   /* or 1 for GRACYSCALE images */
 int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
 
+int postdisplay_cntr=0;	   /*Used In Mouse Passive motion function used to keep track of displayed file names*/
 
 int tmp_w;
 int tmp_h;
+void displaylist()
+{
+    int i;
+    if (traverse==0)
+    {	
+        setdata(&pool1,&hashlist1,&line_obj);
+        traverse==1;
+    }
+    dl=glGenLists(1);
+    glNewList(dl, GL_COMPILE);		
 
+    /*Adding Node as points*/
+    for(i=0; i < hashlist1.size; i++)
+    {
+	if (hashlist1.Hash[i].valid != 1) continue;
+	glShadeModel(GL_SMOOTH); 
+	glLineWidth(1.0);                             
+  	glPointSize(4.0);                  
+	glBegin(GL_POINTS);                
+  	glColor3f(0.0f,0.0f,1.0f);          
+	glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);
+  	glEnd();                          
+    }
+
+    /*ADDING LINE COORDS*/
+    for(i=0; i < line_obj.ne; i++)
+    {
+	glShadeModel(GL_SMOOTH); 
+	glLineWidth(1.0);                             
+  	glPointSize(4.0);                 
+  	glBegin(GL_LINES);                
+	glColor3f(0.0f,1.0f,0.0f);        
+
+  	glVertex3f((float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);
+  	glVertex3f((float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);
+ 	glEnd();                          
+     }
+
+    glEndList();
+}
 int read_jpeg_file( char *filename )
 {
 	/* these are standard libjpeg structures for reading(decompression) */
@@ -106,8 +145,6 @@ int read_jpeg_file( char *filename )
 
 GLvoid LoadTexture(GLvoid)
 {	
-
-
     Image *TextureImage;    
     TextureImage = (Image *) malloc(sizeof(Image));
     if (TextureImage == NULL) {
@@ -144,8 +181,8 @@ void transform(GLfloat Width , GLfloat Height )
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, Width/Height,0.0001f,1000.0f); 
-    glTranslatef(0.0, 0.0, -5.0f);     /* Centre and away the viewer */
+    gluPerspective(60.0f, Width/Height,0.1f,100.0f); 
+    glTranslatef(0.0, 0.0, -25.0f);     /* Centre and away the viewer */
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }
@@ -155,46 +192,40 @@ void transform(GLfloat Width , GLfloat Height )
 
 void InitGL(GLint Width, GLint Height)
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);     /* This Will Clear The Background Color To Black*/
-	glClearDepth(1.0);                	  /* Enables Clearing Of The Depth Buffer*/
-	//LoadTexture();
-	glEnable(GL_TEXTURE_2D);                      /*  Enable texture mapping. */
-	glDepthFunc(GL_LESS);             	/* The Type Of Depth Test To Do*/
-	glEnable(GL_DEPTH_TEST);          	/* Enables Depth Testing*/
-	glShadeModel(GL_SMOOTH);          	/* Enables Smooth Color Shading*/
-	if (traverse==0)
-	{	
-		printf("Displaying AGAIN\n");
-		setdata(&pool1,&hashlist1,&line_obj);
-		traverse==1;
-	}
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);     /* This Will Clear The Background Color To Black*/
+    glClearDepth(1.0);                	  /* Enables Clearing Of The Depth Buffer*/
+    //LoadTexture();
+    glEnable(GL_TEXTURE_2D);                      /*  Enable texture mapping. */
+    glDepthFunc(GL_LESS);             	/* The Type Of Depth Test To Do*/
+    glEnable(GL_DEPTH_TEST);          	/* Enables Depth Testing*/
+    glShadeModel(GL_SMOOTH);          	/* Enables Smooth Color Shading*/
 
-    transform(Width,Height);          /* Do our viewing transform */
+   transform(Width,Height);          /* Do our viewing transform */
 }
 
 
 /* The function called when our window is resized */
 void ReSizeGLScene(GLint Width, GLint Height)
 {
-  if (Height==0)    /* Prevent A Divide By Zero If The Window Is Too Small*/
-    Height=1;
+    if (Height==0)    /* Prevent A Divide By Zero If The Window Is Too Small*/
+        Height=1;
 
     transform(Width,Height);    /* Do our viewing transform */
     w = glutGet((GLenum)GLUT_WINDOW_WIDTH);    /* Make sure our window size is updated */
     h = glutGet((GLenum)GLUT_WINDOW_HEIGHT);
 }
 void setOrthographicProjection() {
-	// switch to projection mode
- 	glMatrixMode(GL_PROJECTION);
-	// save previous matrix which contains the 
-	//settings for the perspective projection
-	glPushMatrix();
-	// reset matrix
-	glLoadIdentity();
-	// set a 2D orthographic projection
-	gluOrtho2D(0, w, h, 0);
-	// switch back to modelview mode
-	glMatrixMode(GL_MODELVIEW);
+    // switch to projection mode
+    glMatrixMode(GL_PROJECTION);
+    // save previous matrix which contains the 
+    //settings for the perspective projection
+    glPushMatrix();
+    // reset matrix
+    glLoadIdentity();
+    // set a 2D orthographic projection
+    gluOrtho2D(0, w, h, 0);
+    // switch back to modelview mode
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void resetPerspectiveProjection() {
@@ -215,109 +246,57 @@ void renderSpacedBitmapString(float x, float y,int spacing, void *font,char *str
 }
 GLvoid draw_room()
 {	
-	//FILE *fp;
-	//fp=fopen("log_projection","w");
-	int i;
-	glPushMatrix();
-	/*
-	printf("DISPLAYING HASH\n");
-	printf("LIST SIZE %d\n",hashlist1.size);
-	fprintf(fp,"\n\nADDING FILE coords\n");
+    int i;
+    //glPushMatrix();
+    //glLoadIdentity();
+    //if ( move==2 )
+    //{
+//	printf("ROT   %f, %f, %f, %f",rot,w1,w2,w3);
+  //  	glRotatef(4*rot, w1, w2, w3);    /* Do the Rotation */
+    //	move=0;
+    //	//}
 
-	for(i=0; i < hashlist1.size; i++)
-	{
-		if(hashlist1.Hash[i].valid == 1)
-		{
-			fprintf(fp,"\tName   :- %s\n",hashlist1.Hash[i].key_name);
-			fprintf(fp,"\tCoords :- %f %f %f\n",(float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);
-			//printf("\tName   :- %s\n",hashlist1.Hash[i].key_name);
-			//printf("\tCoords :- %f %f %f\n",hashlist1.Hash[i].x,hashlist1.Hash[i].y,hashlist1.Hash[i].z);
-		}			
-	}
-	*/
-	for(i=0; i < hashlist1.size; i++)
- 	{
-		if (hashlist1.Hash[i].valid != 1) continue;
-    		//glMatrixMode(GL_MODELVIEW);
-  		//glTranslatef(0.4,0,0);
-    		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
-		glShadeModel(GL_SMOOTH); 
-  		glLineWidth(1.0);                             
-	  	glPointSize(4.0);                             /* Add point size, to make it clear */
-  		glBegin(GL_POINTS);                /* start drawing the cube.*/
-	  	glColor3f(0.0f,0.0f,1.0f);            /* Set The Color To Orange*/
-		//if ((float)hashlist1.Hash[i].x == 12.0 && (float)hashlist1.Hash[i].y == 2.0 && (float)hashlist1.Hash[i].z == 10.0 )
-		if ( i == 0 )
-		{
-	  		glColor3f(1.0f,0.0f,0.0f);            /* Set The Color To Orange*/
-			printf("NOW WHAT\n");
-			tmp_x=(float)hashlist1.Hash[i].x;
-			tmp_y=(float)hashlist1.Hash[i].y;
-			tmp_z=(float)hashlist1.Hash[i].z;
-		}
-  		glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
-	  	glEnd();                              /* Done Drawing The Cube*/
-  		glEnable(GL_DEPTH_TEST);
- 	 }
-	//fprintf(fp,"\n\nADDING LINE COORDS\n");
-	for(i=0; i < line_obj.ne; i++)
- 	{
-    		//glMatrixMode(GL_MODELVIEW);
-  		//glTranslatef(0.4,0,0);
-    		//glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
-		glShadeModel(GL_SMOOTH); 
-  		glLineWidth(1.0);                             
-	  	glPointSize(4.0);                             /* Add point size, to make it clear */
-  		//glLineWidth(1.0);                             
-	  	//glPointSize(4.0);                             /* Add point size, to make it clear */
-  		glBegin(GL_LINES);                /* start drawing the cube.*/
-	  	glColor3f(0.0f,1.0f,0.0f);            /* Set The Color To Orange*/
-  		//glVertex3f((float)hashlist1.Hash[i].x,(float)hashlist1.Hash[i].y,(float)hashlist1.Hash[i].z);        /* Bottom Left Of The Quad (Left)*/
-
-  		glVertex3f((float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
-  		//fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x1,(float)line_obj.coords_obj[i].y1,(float)line_obj.coords_obj[i].z1);        /* Bottom Left Of The Quad (Left)*/
-  		glVertex3f((float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
-  		//fprintf(fp,"%f %f %f\n",(float)line_obj.coords_obj[i].x2,(float)line_obj.coords_obj[i].y2,(float)line_obj.coords_obj[i].z2);        /* Bottom Left Of The Quad (Left)*/
-	  	glEnd();                              /* Done Drawing The Cube*/
-  		glEnable(GL_DEPTH_TEST);
- 	 }
- 
+    glCallList(dl);	/*We have used precompiled display list*/
+    glEnable(GL_DEPTH_TEST); 
 }
+
 /* The main drawing function. */
 void DrawGLScene()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    /* Clear The Screen And The Depth Buffer*/ 
-    printf("%f %f %f\n",xt,yt,zt);
-    printf("%f %f %f %f\n",rot,w1,w2,w3);
-    glPushMatrix();
-   
-  
-    glMatrixMode(GL_PROJECTION);
-    //if ( move==2 )
+    printf("TRANS %f %f %f\n",xt,yt,zt);
+    printf("ROTAT %f %f %f %f\n",rot,w1,w2,w3);
+    //glPushMatrix();
+    //glRotatef(4*rot, w1, w2, w3);    /* Do the Rotation */
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    if (reset==1)
+    {
+    	//glPushMatrix();
+        glLoadIdentity();
+    	//glPopMatrix();
+	reset=0;
+        //glTranslatef(xt,yt,zt);
+    }
+    if ( move==2 )
     {
     	glRotatef(4*rot, w1, w2, w3);    /* Do the transformation */
-//	move=0;
+    	move=0;
     }
-    glMatrixMode(GL_MODELVIEW);
+
+    //glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
+    glPushMatrix();
     //if ( move==1 )
-    {
-    	//glMatrixMode(GL_MODELVIEW);
-    	glLoadIdentity();
-    	glTranslatef(xt,yt, zt);
-    	//glScalef(xt,yt, zt);
-	move=0;
-    }
-  //glScalef(xt,yt,zt);
-//    if( object == 0 )                /* Draw an object */
-//        draw_pyramid();
-//    else
-//        draw_cube();
-
-  //  glLoadIdentity();
-
+    //{
+    	//glLoadIdentity();		/*Set Allmatrix to initial bad for rotation*/
+    	glTranslatef(xt,yt,zt);
+	//move=0;
+    //}
 
     draw_room();
     glPopMatrix();
+    //glPopMatrix();
     glutSwapBuffers();               /* Swap buffers */
     glFlush();
 }
@@ -339,20 +318,13 @@ void keyPressed(unsigned char key, int x, int y)
      case 'x':                          /* Scale x up */
         xt += 0.2;
 	move=1;
-    	//glMatrixMode(GL_MODELVIEW);
-    	//glLoadIdentity();
-    	//glTranslatef(xt,yt, zt);
         glutPostRedisplay();
         break;
      case 'X':
         xt -= 0.2;                      /* Scale x down */
 	move=1;
-    	//glMatrixMode(GL_MODELVIEW);
-    	//glLoadIdentity();
-    	//glTranslatef(xt,yt, zt);
         glutPostRedisplay();
         break;
-
       case 'y':                          /* Scale y up */
         yt += 0.2;
 	move=1;
@@ -374,16 +346,17 @@ void keyPressed(unsigned char key, int x, int y)
 	move=1;
         glutPostRedisplay();
         break;
-     case 'r':				/* Reset */
-	xt = 1.0;
-	yt = 1.0;
-	zt = 1.0;
+     case 'r':
+	reset=1;				/* Reset */
+        glutPostRedisplay();
+	xt = 0.0;
+	yt = 0.0;
+	zt = 0.0;
 	rot = 0.0;
 	w1 = 0.0;
 	w2 = 0.0;
 	w3 = 0.0;
         glutPostRedisplay();
-	//DrawGLScene();    
     	break;
 	
      default:
@@ -473,45 +446,62 @@ void find_axis_of_rotation(int x, int y, int dx, int dy,GLfloat *rot, GLfloat *w
     *w3 = m[8]*a1 + m[9]*a2 + m[10]*a3;
 }
 
-GLvoid Mouse( int b , int s, int xx, int yy)
+GLvoid passiveMouseMotion_function(int xx, int yy)
 {
-	printf("Mouse: %d %d\n",xx,yy);
-	{
-	double a1,a2,a3;	
+    printf("Mouse: %d %d\n",xx,yy);
+    double a1,a2,a3;	
+	int i;
 	GLint viewport[4];
 	GLdouble modelview[16];
 	GLdouble projection[16]; 
 	glGetIntegerv(GL_VIEWPORT, viewport);  
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelview); 	
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);  
- 	gluProject(tmp_x+xt,tmp_y+yt,tmp_z+zt, modelview, projection, viewport, &a1, &a2, &a3);
 
-	printf("Unproject %f %f %f\n",a1,a2,a3);	
- 	glPopMatrix();
+ 	//gluProject(tmp_x,tmp_y,tmp_z, modelview, projection, viewport, &a1, &a2, &a3);
+ 	//gluUnProject((float)xx,(float)yy,0.5f, modelview, projection, viewport, &a1, &a2, &a3);
+	//printf("Original %f %f %f\n",tmp_x,tmp_y,tmp_z);	
+	//printf("Unproject %f %f %f\n",a1,a2,a3);	
+	//printf("FloatUnproject %f %f %f\n",a1,((float)viewport[3]-a2),a3);	
+	//printf("Int  Unproject %d %d %d\n",(int)a1,(int)((float)viewport[3]-a2),a3);	
+ 	//glPopMatrix();
+	for (i=0;i<hashlist1.size;i++)
+	{
+	    gluProject((float)hashlist1.Hash[i].x+xt,(float)hashlist1.Hash[i].y+yt,(float)hashlist1.Hash[i].z+zt,modelview,projection,viewport,&a1,&a2,&a3);
+	    a2=(float)viewport[3]-a2;	
+	    if ( (int)a1 > xx-5 && (int)a1<xx+5 && (int)a2 > yy-5 && (int)a2 < yy+5 )
+	    {
+		printf("HURRAY founded\n");
+		//printf("Unproject %d %d %d\n",(int)a1,(int)(((float)viewport[3]-a2)),(int)a3);	
+  		setOrthographicProjection();
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef(50.0f ,40.0f,0.0f);
+	  	glLineWidth(1.0);                             
+		glPointSize(4.0);                             /* Add point size, to make it clear */
 
-  	setOrthographicProjection();
-	glPushMatrix();
-	glLoadIdentity();
-	glTranslatef(50.0f ,40.0f,0.0f);
-  	glLineWidth(1.0);                             
-	glPointSize(4.0);                             /* Add point size, to make it clear */
-	glColor3f(0.5,0.5,0.5);            /* Set The Color To Blue*/
-  	glBegin(GL_QUADS);                /* start drawing the cube.*/
-  	glVertex3f(a1,a2,0.0);        /* Top Right Of The Quad (Top)*/
-  	glVertex3f(a1-50.0,a2,0.0);        /* Top Right Of The Quad (Top)*/
-  	glVertex3f(a1-50.0,a2+20.0,0.0);        /* Top Right Of The Quad (Top)*/
-  	glVertex3f(a1,a2+20.0,0.0);        /* Top Right Of The Quad (Top)*/
-	glEnd();
+		glColor3f(0.0,0.0,1.0);            
+		renderSpacedBitmapString(a1-45,a2+10,0,GLUT_BITMAP_TIMES_ROMAN_10,hashlist1.Hash[i].key_name);
+	    	glutSwapBuffers();               /* Swap buffers */
+  	  	glFlush();
+		glPopMatrix();
+		resetPerspectiveProjection();
+		/*
+		postdisplay_cntr++;
+		if (postdisplay_cntr > 1 )	
+		{
+			postdisplay_cntr=0;
+        		glutPostRedisplay();
+		}
+		*/
+	    }
+	    else	
+        	glutPostRedisplay();
+	}	
+}
 
-	renderSpacedBitmapString(5,30,0,GLUT_BITMAP_TIMES_ROMAN_10,"3D Tech");
-    	glutSwapBuffers();               /* Swap buffers */
-    	glFlush();
-	//glutWireCube(2.0f); // Render the primitive
-	glPopMatrix();
-		
-	resetPerspectiveProjection();
-	//fclose(fp);	
-	}
+GLvoid Mouse( int b , int s, int xx, int yy)
+{
     switch (b) {
     case GLUT_LEFT_BUTTON:	/* only stash away for left mouse */
         prevx = xx - w/2;
@@ -530,10 +520,9 @@ GLvoid Mouse( int b , int s, int xx, int yy)
 GLvoid Motion( int xx , int yy )
 {
     int x, y, dx, dy;
-        
     if( mb == 0 )            /* only for left mouse folks */
     {
-//	move=2;
+	move=2;
         x = xx - w/2;
         y = h/2 - yy;
         dx = x - prevx;
@@ -541,8 +530,9 @@ GLvoid Motion( int xx , int yy )
         prevx = x; /* Save x and y for dx and dy calcs next time */
         prevy = y;
         find_axis_of_rotation(x, y, dx, dy, &rot, &w1, &w2, &w3);
-        //glutPostRedisplay();
-        DrawGLScene();
+	printf("%f, %f, %f, %f",rot,w1,w2,w3);
+        glutPostRedisplay();
+        //DrawGLScene();
 
     }  
 }

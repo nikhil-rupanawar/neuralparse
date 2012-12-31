@@ -1,14 +1,13 @@
 #include<stdio.h>
 #include<string.h>
 #include<malloc.h>
+#include<stdlib.h>
 #include"pool.h"
 #include"node.h"
 #include"node2.h"
 #include"hashlist.h"
-#include"hashlist2.h"
 #include"community.h"
-int pass_no;
-int comm_no;			/*Contains the no of communities in the previous pass*/
+int phase_no;
 struct info
 {
         int no;
@@ -49,18 +48,71 @@ void read_community(char* community)
 
 float find_modularity(char* community, char* nodei)
 {
-        //printf("\tCommunity: %s\t",community);
+        printf("\tCommunity: %s\n",community);
         //printf("Nodei: %s\t",nodei);
        	// printf("%s\n",community);
         int i,j,total,size,comm_total;
-        FILE* file_comm=fopen(community,"rb");
 
-        fread(&total,sizeof(int),1,file_comm);
-        //printf("Total Communities:- %d\n",total);
         int m=0;
         int inci_i=0;
+	int inci_c=0;
         int c_inner=0;
 	int i_inci_c=0;
+
+        hashlist listnode;				//listnode contains all elemnents in community of nodei
+        hashlist_ops.hashlist_initialize(&listnode);
+
+        FILE* file_comm=fopen(community,"rb");
+        fread(&total,sizeof(int),1,file_comm);
+
+	/*Finding Elements in community of node i for that we have to traverse the community file, to get i and eventualy its community
+ 	* Then we can add that members to listnode*/ 	
+        for(i=0; i<total; i++)                  //For each community
+        {
+		int break_flag=0;
+                long position;
+                fread(&comm_total,sizeof(int),1,file_comm);
+                position=ftell(file_comm);
+                for(j=0;j<comm_total;j++)       //for each nodej in community
+                {
+                        char* node;
+                        fread(&size,sizeof(int),1,file_comm);
+                        node=(char*)malloc(sizeof(char)*size+1);
+                        memset(node,'\0',size+1);      
+                        fread(node,sizeof(char),size,file_comm);
+                        /*When nodei is found then iterate over its community to find community weight*/ 
+                        if (!strcmp(nodei,node))                //Checking if this node is nodei
+                        {
+                                int a;
+                                //long tmp_position;
+                                //tmp_position=ftell(file_comm);
+				printf("seek to position %ld\n",position);
+                                fseek(file_comm,position,SEEK_SET);  //Set File ptr to the position after no of elements in to nodei community
+                                for(a=0;a<comm_total;a++)       //for each nodej in community
+                                {
+                                        char* node;
+                                        fread(&size,sizeof(int),1,file_comm);
+                                        node=(char*)malloc(sizeof(char)*size+1);
+                                        memset(node,'\0',size+1);      
+                                        fread(node,sizeof(char),size,file_comm);
+                                        hashlist_ops.hashlist_add(&listnode,node,0,0,0);
+                                        free(node);
+                                }
+                                //fseek(file_comm,tmp_position,SEEK_SET);
+				//Modification This fseek is not needed instead hust break These LOOPS because community node now finded
+				break_flag=1;
+				if (break_flag) break;
+                        }               
+			if (break_flag)	break;
+      		}
+		if (break_flag) break;
+	}
+	fclose(file_comm);
+	printf("Exited\n");
+	/*REDEFINATION*/
+        file_comm=fopen(community,"rb");
+        fread(&total,sizeof(int),1,file_comm);
+        //fseek(file_comm,0,SEEK_SET);
         for(i=0; i<total; i++)                  //For each community
         {
                 long position;
@@ -78,98 +130,7 @@ float find_modularity(char* community, char* nodei)
                         fread(node,sizeof(char),size,file_comm);
 
                         /*When nodei is found then iterate over its community to find community weight*/ 
-                        if (!strcmp(nodei,node))                /*Checking if this node is nodei*/
-                        {
-                                int a;
-                                long tmp_position;
-                                tmp_position=ftell(file_comm);
-
-//Tmp_code Start
-                                hashlist listlink;
-                                hashlist_ops.hashlist_initialize(&listlink);
-                                hashlist listnode;
-                                hashlist_ops.hashlist_initialize(&listnode);
-				
-                                fseek(file_comm,position,SEEK_SET);     /*Set File ptr to the position after no of elements in the
-									 nodei community*/
-                                for(a=0;a<comm_total;a++)       //for each nodej in community
-                                {
-                                        char* node;
-                                        fread(&size,sizeof(int),1,file_comm);
-                                        node=(char*)malloc(sizeof(char)*size+1);
-                                        memset(node,'\0',size+1);      
-                                        fread(node,sizeof(char),size,file_comm);
-                                        hashlist_ops.hashlist_add(&listnode,node,0,0,0);        /* Treat 2 argument as cntr */
-
-                                        FILE* file_node=fopen(node,"rb");
-                                        while(fread(&size,sizeof(int),1,file_node))
-                                        {
-                                                //printf("Size: %d\n",size);
-                                                char* link = (char*)malloc(sizeof(char)*size+1);
-                                                memset(link,'\0',size+1);      
-                                                fread(link,sizeof(char),size,file_node);
-                                               
-                                                /*Adding links to the addlist */
-                                                hash* hashnode = hashlist_ops.hashlist_findhash(&listlink,link);                                              
-                                                if ( hashnode == NULL )
-                                                {
-                                                        //if (!strcmp(,link))
-                                                        if(!strcmp(node,nodei))
-                                                        	hashlist_ops.hashlist_add(&listlink,link,1,1,0);  /* Treat 2 argument as 
-															cntr,3 arg as
-															cntr for nodei */
-							else	
-                                                       		hashlist_ops.hashlist_add(&listlink,link,1,0,0);        /* Treat 2 argument as cntr */
-                                                        //printf("$$$$$$$$$$$$$$$$$$$$$$ NULL    : %s \n",link);
-                                                }
-                                                else
-                                                {
-                                                        if(!strcmp(node,nodei))
-                                                        	++hashnode->y;                                  /*Incrementing counter of links of nodei*/
-                                                        ++hashnode->x;                                  /*Incrementing counter of links*/
-                                                        //printf("<<<<<<<<<<<<<<<<<<<<<< NOT null: %s \n",link);
-                                                }
-                                                //hashlist_ops.hashlist_add(&list,"A",3,4,4);   /*Treat 2 argument as cntr and third one as valid bit */
-
-                                                free(link);    
-                                        }
-                                        fclose(file_node);
-
-                                        free(node);
-                                }
-
-                                /*
-                                * Now hashlink contains all list of link and their cntr,
-                                * hashnode contain all the nodes in community of nodei
-                                * */
-                               
-                                /*Link inside the community*/  
-                                int s;          
-                                if (listlink.alloted == 0) return;
-                                for(s=0; s < listlink.size; s++)
-                                {
-                                        if(listlink.Hash[s].valid == 1)
-                                        {
-                                                hash* tmp;
-                                               // printf("\tName   :- %s\n",listlink.Hash[s].key_name);
-                                               // printf("\tCoords :- %d %d %d\n",listlink.Hash[s].x,listlink.Hash[s].y,listlink.Hash[s].z);
-                                                tmp = hashlist_ops.hashlist_findhash(&listnode,listlink.Hash[s].key_name);
-
-                                                if ( tmp != NULL )      
-                                                {
-						        c_inner += listlink.Hash[s].x;
-							if (listlink.Hash[s].y > 0)
-								i_inci_c+=listlink.Hash[s].y;		
-                                                }       
-                                        }                      
-                                }
-                                       
-                                fseek(file_comm,tmp_position,SEEK_SET);
-//TMP_code Ends
-                                       
-                        }                      
-       
-                        //printf("Node: %s\n",node);
+ //ADD Here 
                         FILE* file_node;
                         file_node=fopen(node,"rb");
                         while(fread(&size,sizeof(int),1,file_node))
@@ -179,8 +140,25 @@ float find_modularity(char* community, char* nodei)
                                 link=(char*)malloc(sizeof(char)*size+1);
                                 memset(link,'\0',size+1);      
                                 fread(link,sizeof(char),size,file_node);
-                                if (!strcmp(nodei,link)) inci_i++;                      /*If destination is nodei increment inci_i */
-                                m++;
+                                hash* hashsrc = hashlist_ops.hashlist_findhash(&listnode,node);
+                                hash* hashdst = hashlist_ops.hashlist_findhash(&listnode,link);
+
+				if (!strcmp(nodei,node))                   /*If node is nodei */
+				{
+					if (hashdst != NULL)
+						i_inci_c++;
+				}
+			
+				if (hashdst != NULL)
+				{
+					if (hashsrc != NULL )		// If src and dst belong to nodei community 
+						c_inner++;
+					else				// if src dont belong to nodei community but destination belongs 
+						inci_c++;
+				}	
+
+                                if (!strcmp(nodei,link)) inci_i++;      /*If destination is nodei increment inci_i */
+                                m++;					//Increment the total link counter
                                 free(link);    
                         }
                         fclose(file_node);
@@ -191,12 +169,15 @@ float find_modularity(char* community, char* nodei)
         printf("Inci 2 nodei     : %d\n",inci_i);
         printf("nodei 2 community: %d\n",i_inci_c);
         printf("Weight community : %d\n",c_inner);
+        printf("Inci 2 communitynodes : %d\n",inci_c);
         fclose(file_comm);     
 	float tmp1,tmp2;
 	tmp1 = ((float)c_inner+i_inci_c+i_inci_c)/(m+m);
-	tmp1 = tmp1 - ((1+(float)inci_i)/(m+m))*((1+(float)inci_i)/(m+m));
+	//tmp1 = tmp1 - ((1+(float)inci_i)/(m+m))*((1+(float)inci_i)/(m+m));
+	tmp1 = tmp1 - ((inci_c+(float)inci_i)/(m+m))*((inci_c+(float)inci_i)/(m+m));
 	tmp2 = ((float)c_inner)/m+m;
-	tmp2 = tmp2 - (1/m+m)*(1/m+m);
+	//tmp2 = tmp2 - (1/m+m)*(1/m+m);
+	tmp2 = tmp2 - ((float)inci_c/m+m)*((float)inci_c/m+m);
 	tmp2 = tmp2 - ((float)inci_i/m+m)*((float)inci_i/m+m);
 	tmp1=tmp1-tmp2;
         return tmp1;
@@ -412,8 +393,8 @@ int phase1(pool* pool1)
 	else
 		printf("Error in changing diretory\n");
         int i, j, size;
-	char* community=(char*)malloc(sizeof("PASS")+sizeof(pass_no));
-	sprintf(community,"PASS%d",pass_no);
+	char* community=(char*)malloc(sizeof("PASS")+sizeof(phase_no));
+	sprintf(community,"PASS%d",phase_no);
         FILE *fp = fopen(community,"wb");
         //pool_ops.display_nodes(pool1);
         //struct community comm[pool1->ne_pool];  
@@ -489,41 +470,34 @@ int phase1(pool* pool1)
         	fclose(file);
 	}
 	//system("./../read PHASE1_community");
-	read_community(community);	
-	phase2();
+	//read_community(community);	
+	//phase2(pool1);
 }
 
-int phase2()
+int phase2(pool* pool1)
 {
 	int local=0;	
-
+        pool_ops.display_nodes(pool1);
         pool poolphase2;
         create_pool(&poolphase2);
-	hashlist2 list_pair;			/*list_pair contains the pair of node(key), community(extra)*/
-	hashlist_ops2.hashlist_initialize2(&list_pair);
 
-	char* community=(char*)malloc(sizeof("PASS")+sizeof(pass_no));
-	sprintf(community,"PASS%d",pass_no);
+	char* community=(char*)malloc(sizeof("PASS")+sizeof(phase_no));
+	sprintf(community,"PASS%d",phase_no);
 
         int i,j,total,size,comm_total;
         FILE* file_comm=fopen(community,"rb");
 
         fread(&total,sizeof(int),1,file_comm);
         printf("Total Communities:- %d\n",total);
-	if (comm_no == total)
-	{
-		printf("NO COMMUNITIES REDUCED\n");
-		return;	
-	}
-	comm_no=total;
+        int m;
         for(i=0; i<total; i++)                  //For each community
         {
                 printf("\tCommunity:- %d\n",i);
                 fread(&comm_total,sizeof(int),1,file_comm);
                 printf("\t\tTotal N_C : %d\n",comm_total);
-			
-		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(pass_no)+sizeof("_node")+sizeof(long));
-		sprintf(name_node,"PASS%d_node%d",pass_no,local++);
+
+		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(phase_no)+sizeof("_node")+sizeof(long));
+		sprintf(name_node,"PASS%d_node%d",phase_no,local++);
 	        pool_ops.create_node(&poolphase2,name_node);
 		
                 for(j=0;j<comm_total;j++)       //for each nodej in community
@@ -535,79 +509,59 @@ int phase2()
                         memset(node,'\0',size+1);      
                         fread(node,sizeof(char),size,file_comm);
                         printf("Node: %s\n",node);
-			hashlist_ops2.hashlist_add2(&list_pair,node,name_node,0,0,0);
                 }
 		free(name_node);
         }      
         fclose(file_comm);      
-	hashlist_ops2.hashlist_display2(&list_pair);	
-
-/*
- * poolphase2: pool contains the new community as nodes  eg. PASS1_node0, PASS1_node1
- * list_pair : hashlist2 contains pair (node, community) as (key,extra)
- * 
- * list_pair : used to get the community of node.
- *
- *
- * */
-
-	/*Reopening The community file*/
-        file_comm=fopen(community,"rb");
-        fread(&total,sizeof(int),1,file_comm);
-        for(i=0; i<total; i++)                  //For each community
-        {
-                fread(&comm_total,sizeof(int),1,file_comm);
-		char* name_node=(char*)malloc(sizeof("PASS")+sizeof(pass_no)+sizeof("_node")+sizeof(long));
-		sprintf(name_node,"PASS%d_node%d",pass_no,local++);
-
-                for(j=0;j<comm_total;j++)       //for each nodej in community
-                {
-                        char* node_var;
-                        fread(&size,sizeof(int),1,file_comm);
-                        node_var=(char*)malloc(sizeof(char)*size+1);
-                        memset(node_var,'\0',size+1);      
-                        fread(node_var,sizeof(char),size,file_comm);
-
-                        FILE* file_node = fopen(node_var,"rb");					/*Open nodefile , find the community(link) which node point, add that to												 the node element in pool*/
-			hash2* h1 = hashlist_ops2.hashlist_findhash2(&list_pair,node_var);
-			node* n1 =  pool_ops.get_node(&poolphase2,h1->extra);
-                        while(fread(&size,sizeof(int),1,file_node))
-                        {
-                                char* link = (char*)malloc(sizeof(char)*size+1);
-                               	memset(link,'\0',size+1);      
-                                fread(link,sizeof(char),size,file_node);
-				hash2* h2 = hashlist_ops2.hashlist_findhash2(&list_pair,link);
-				node_ops.add_element(n1,h2->extra);
-                                               
-			}	
-			fclose(file_node);
-			free(node_var);
-                }
-	
-		free(name_node);
-        }      
-        fclose(file_comm); 
-	
-/* 
- * poolphase2 contains the 2D array of new_nodes and the link to which they point 
- *
- *
- */
-        for(i=0; i< poolphase2.ne_pool; i++)
-        {
-                printf("-------------------\n");
-                node_ops.display_element(&poolphase2.node_obj[i]);
-        }
-
-	pass_no++;
-        phase1(&poolphase2);	
+	//read_community("PASS1");	
+        pool_ops.display_nodes(&poolphase2);
+        //node_ops.add_element(&pool1.node_obj[1],"node0");
 }
+/*
+int main()
+{
+	int i;
+	phase_no=1;
+        pool pool1;
+        create_pool(&pool1);
+	int total,node,link;
+	
+	char are[8];
+	FILE *fp; fp=fopen("graph","r");
+	if (fp == NULL) {
+  		printf("Can't open output file\n");
+  		exit(1);
+	}
+			
+	fscanf(fp,"%d",&total);
+	for (i=0;i<total;i++)
+	{
+		char* tmp=(char*)malloc(sizeof(char)*20);
+	 	sprintf(tmp, "node%d", i);
+        	pool_ops.create_node(&pool1,tmp);
+	}
+	while (fscanf(fp,"%d %d",&node,&link) != EOF)
+	{
+		char* tmp=(char*)malloc(sizeof(char)*20);
+	 	sprintf(tmp, "node%d",link);
+        	node_ops.add_element(&pool1.node_obj[node],tmp);
+	}
+	fclose(fp);
 
+	printf("-----------------displaying pool nodes---------------\n");
+	for(i=0;i< pool1.ne_pool;i++)
+	{
+	//	printf("%s\n",pool1.node_obj[i].name);	
+	//	node_ops.display_element(&pool1.node_obj[i]);
+	}
+        phase1(&pool1);
+}
+*/
+/*
 int main()
 {
         int i;
-	pass_no=1;
-	comm_no=0;
+	phase_no=1;
         pool pool1;
         create_pool(&pool1);
         pool_ops.create_node(&pool1,"node0");
@@ -643,4 +597,4 @@ int main()
         //phase1();
 	//fflush(stdio);
 	//system("./read PHASE1_community");
-}
+}*/

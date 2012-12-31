@@ -1,5 +1,5 @@
-run: start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashlist.o hashalgo.o community.o
-	gcc -o run start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashalgo.o community.o -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
+np: start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashlist.o hashalgo.o community.o
+	gcc -o np start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashalgo.o community.o -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
 
 start_p.o: start_p.c
 	gcc -c start_p.c -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
@@ -39,3 +39,8 @@ hashalgo.o: hashalgo.c
 
 community.o: community.c
 	gcc -c community.c
+
+Install:
+	cp np /bin
+Clean:
+	rm -f *.gch *.o
