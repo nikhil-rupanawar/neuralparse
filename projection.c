@@ -181,11 +181,7 @@ void transform(GLfloat Width , GLfloat Height )
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-<<<<<<< HEAD
     gluPerspective(60.0f, Width/Height,0.1f,1000.0f); 
-=======
-    gluPerspective(60.0f, Width/Height,0.1f,100.0f); 
->>>>>>> 2ef2b550d72d95a2d4a5cabdd99cadf6486ef13b
     glTranslatef(0.0, 0.0, -25.0f);     /* Centre and away the viewer */
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

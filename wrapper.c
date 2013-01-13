@@ -16,10 +16,6 @@ void wrapper_addfile(Wrapper* wrapper1,char* file_path)
 		//printf("NULLLLLL\n");
 		list_tmp->next=NULL;
 		wrapper1->filelist1=list_tmp;
-<<<<<<< HEAD
-=======
-
->>>>>>> 2ef2b550d72d95a2d4a5cabdd99cadf6486ef13b
 	}
 	else
 	{

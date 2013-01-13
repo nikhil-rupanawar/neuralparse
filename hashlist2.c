@@ -88,11 +88,7 @@ void hashlist_display_implemented2(hashlist2* list1)
         {
                 if(list1->Hash[i].valid == 1)
                 {
-<<<<<<< HEAD
                         printf("\tName   :- %s\t\tExtra	:- %s\n ",list1->Hash[i].key_name, list1->Hash[i].extra);
-=======
-                        printf("\tName   :- %s\tExtra	:- %s\n ",list1->Hash[i].key_name, list1->Hash[i].extra);
->>>>>>> 2ef2b550d72d95a2d4a5cabdd99cadf6486ef13b
                         printf("\tCoords :- %d %d %d\n",list1->Hash[i].x,list1->Hash[i].y,list1->Hash[i].z);
                 }                      
         }
