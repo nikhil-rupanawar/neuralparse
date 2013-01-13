@@ -45,6 +45,7 @@ static const struct hashlist_ops_n2 hashlist_ops2 = {		//Redefining Functions to
 
 
 /*Usage
+<<<<<<< HEAD
 hashlist2 list1;
 hashlist_ops2.hashlist_initialize2(&list1);
 hashlist_ops2.hashlist_add2(&list1,"A","sd",3,4,4);
@@ -52,4 +53,13 @@ hashlist_ops2.hashlist_add2(&list1,"N","sd",3,4,4);
 hashlist_ops2.hashlist_add2(&list1,"N","sd",3,4,4);
 hashlist_ops2.hashlist_display2(&list1);	
 hash* h1 = hashlist_ops2.hashlist_findhash2(&list1,"key");	
+=======
+hashlist hashlist1;
+hashlist_ops.hashlist_initialize(&hashlist1);
+hashlist_ops.hashlist_add(&hashlist1,"A",3,4,4);
+hashlist_ops.hashlist_add(&hashlist1,"N",3,4,4);
+hashlist_ops.hashlist_add(&hashlist1,"N",3,4,4);
+hashlist_ops.hashlist_display(&hashlist1);	
+hash* h1 = hashlist_ops.hashlist_findhash(&hashlist1,"key");	
+>>>>>>> 2ef2b550d72d95a2d4a5cabdd99cadf6486ef13b
 */
