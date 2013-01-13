@@ -1,5 +1,5 @@
-np: start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashlist.o hashalgo.o community.o
-	gcc -o np start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashalgo.o community.o -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
+np: start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o  node2.o hashlist.o hashlist2.o hashalgo.o community.o distribute.o relpath.o queue.o
+	gcc -o np start_p.o projection.o setdata.o coords.o  wrapper.o regexfile.o recurse.o pool.o node.o node2.o hashlist.o hashlist2.o hashalgo.o community.o distribute.o relpath.o queue.o -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
 
 start_p.o: start_p.c
 	gcc -c start_p.c -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
@@ -7,8 +7,11 @@ start_p.o: start_p.c
 projection.o : projection.c
 	gcc -c projection.c -I /usr/include/include/ -L /usr/lib64/ -lglut -lGL -lGLU -lX11 -lXmu -lXi -lm  -lstdc++ -ljpeg
 
-setfile.o: setdata.c
-	gcc -c setdata.c
+setfile.o: setdata.c community.c
+	gcc -c setdata.c community.c
+
+community.o: community.c 
+	gcc -c community.c
 
 coords.o: coords.c
 	gcc -c coords.c
@@ -37,8 +40,15 @@ hashlist.o: hashlist.c
 hashalgo.o: hashalgo.c
 	gcc -c hashalgo.c
 
-community.o: community.c
-	gcc -c community.c
+
+distribute.o: distribute.c
+	gcc -c distribute.c
+
+relpath.o: relpath.c
+	gcc -c relpath.c
+
+queue.o: queue.c
+	gcc -c queue.c
 
 Install:
 	cp np /bin

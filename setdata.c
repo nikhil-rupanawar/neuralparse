@@ -12,6 +12,7 @@
 #include "community.h"
 void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 {	
+    	system("rm tmp/* -rf");
 	int i,j;			
 	char* cwd=gnu_getcwd();
 	strcat(cwd,"/");
@@ -55,15 +56,9 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 		node_ops.display_element(&pool1->node_obj[i]);
 	}
 
-        //phase1(pool1);
-		
-	/*TMP CODE*/
-
-	
-	//Filelist* list2=wrapper1->filelist1;	
-	//hashlist hashlist1;
-	
 	hashlist_ops.hashlist_initialize(hashlist1);
+	find_community(pool1,hashlist1);
+	/*		
 	for(i=0; i < pool1->ne_pool; i++)
 	{
 		hashlist_ops.hashlist_add(hashlist1,pool1->node_obj[i].name,rand()%20,rand()%20,rand()%20);
@@ -72,8 +67,9 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 			
 		//printf("%s\n",pool1->node_obj[i].name);	
 	}
+	*/
+	//exit(0);	
 	hashlist_ops.hashlist_display(hashlist1);	
-	
 	//for(i=0;i<node_obj->ne_node;i++)
 		//printf("\tElement %d\t%s\n",i,node_obj->element_obj[i].name);	
 	hash* hash_get1;
@@ -85,18 +81,20 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 	{
 		printf("NODE NAME :- %s\n",pool1->node_obj[i].name);
 		hash_get1=hashlist_ops.hashlist_findhash(hashlist1,pool1->node_obj[i].name);	
-		if (hash_get1==NULL)
+		if (hash_get1 == NULL)
 		{
-			printf("Hash not added properly\n");
+			printf("Hash1 not added properly\n");
 			exit(1);
 		}	
 		for(j=0; j < pool1->node_obj[i].ne_node; j++)
-		{	
+		{
+			printf("Name to find %s\n",pool1->node_obj[i].element_obj[j].name);	
 			hash_get2=hashlist_ops.hashlist_findhash(hashlist1,pool1->node_obj[i].element_obj[j].name);	
-			if (hash_get2==NULL)
+			if (hash_get2 == NULL)
 			{
-				printf("Hash not added properly\n");
-				exit(1);
+				printf("Hash2 not added properly\n");
+				//exit(1);
+				continue;
 			}	
 	      		printf("Not NULL\n");
 		        printf("\tName   :- %s\n",hash_get1->key_name);
@@ -108,5 +106,5 @@ void setdata(pool* pool1,hashlist* hashlist1,line* line_obj)
 		}
 	}
 	line_ops.line_display(line_obj);
-
+//	exit(0);
 }
